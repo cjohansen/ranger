@@ -122,6 +122,7 @@ function createModel(container, slider, opt) {
 }
 
 function createInput(container, opt) {
+  container = container[0] && container[0].tagName ? container[0] : container;
   var slider = container.getElementsByClassName('slider')[0];
   if (!slider) {
     throw new Error('Cannot make element a range input, no .slider');
