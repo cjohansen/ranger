@@ -1,0 +1,29 @@
+{
+  "name": "ranger",
+  "version": "1.0.0",
+  "description": "Custom range input component",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "./node_modules/karma/bin/karma start karma.conf.js",
+    "bundle": "browserify -s ranger -o dist/ranger.js index.js"
+  },
+  "author": "Christian Johansen (christian.johansen@nrk.no)",
+  "license": "ISC",
+  "dependencies": {
+    "mmouse": "^1.0.0",
+    "bane": "^1.1.0"
+  },
+  "devDependencies": {
+    "browserify": "^5.11.1",
+    "karma": "*",
+    "karma-browserifast": "^0.7.0",
+    "karma-chrome-launcher": "*",
+    "karma-firefox-launcher": "*",
+    "karma-jasmine": "*",
+    "karma-referee": "^0.4.0",
+    "karma-safari-launcher": "*"
+  }
+}
