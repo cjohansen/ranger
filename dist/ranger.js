@@ -123,6 +123,7 @@ function createModel(container, slider, opt) {
 }
 
 function createInput(container, opt) {
+  container = container[0] && container[0].tagName ? container[0] : container;
   var slider = container.getElementsByClassName('slider')[0];
   if (!slider) {
     throw new Error('Cannot make element a range input, no .slider');
@@ -332,7 +333,6 @@ exports.createInput = createInput;
 });
 
 },{}],3:[function(require,module,exports){
-/*global _*/
 function clamp(val, min, max) {
   min = typeof min === 'number' ? min : -Infinity;
   max = typeof max === 'number' ? max : Infinity;
@@ -418,13 +418,13 @@ function trackMovement(options) {
   };
 }
 
-function trackMovementIn(el, options) {
-  return trackMovement(_.merge(options || {}, {
-    getMinX: function () { return 0; },
-    getMaxX: function () { return el.offsetWidth; },
-    getMinY: function () { return 0; },
-    getMaxY: function () { return el.offsetHeight; }
-  }));
+function trackMovementIn(el, opt) {
+  var options = opt || {};
+  options.getMinX = function () { return 0; };
+  options.getMaxX = function () { return el.offsetWidth; };
+  options.getMinY = function () { return 0; };
+  options.getMaxY = function () { return el.offsetHeight; };
+  return trackMovement(options);
 }
 
 exports.trackMovement = trackMovement;
