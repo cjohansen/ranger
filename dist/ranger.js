@@ -4,8 +4,9 @@ var mmouse = require('mmouse');
 
 function defaultAction(fn) {
   return function (e) {
-    e.preventDefault();
-    fn(e);
+    if (!fn(e)) {
+      e.preventDefault();
+    }
   };
 }
 

@@ -13,7 +13,7 @@
   "author": "Christian Johansen (christian.johansen@nrk.no)",
   "license": "ISC",
   "dependencies": {
-    "mmouse": "^1.0.0",
+    "mmouse": "^1.1.0",
     "bane": "^1.1.0"
   },
   "devDependencies": {
