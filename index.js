@@ -11,6 +11,10 @@ function defaultAction(fn) {
   };
 }
 
+/**
+ * Register event listener and return a 'spec' that can be passed to off() to
+ * deregister.
+ */
 function on(el, ev, handler) {
   el.addEventListener(ev, handler);
   return [el, ev, handler];
@@ -18,6 +22,49 @@ function on(el, ev, handler) {
 
 function off(spec) {
   spec[0].removeEventListener(spec[1], spec[2]);
+}
+
+/**
+ * Get the position of an element in the viewport.
+ */
+function getPosition(element) {
+  var x = 0;
+  var y = 0;
+  while (element) {
+    x += element.offsetLeft - element.scrollLeft + element.clientLeft;
+    y += element.offsetTop - element.scrollTop + element.clientTop;
+    element = element.offsetParent;
+  }
+  return {x: x, y: y};
+}
+
+/**
+ * Get dimensions of element
+ */
+function getDimensions(element) {
+  return {x: element.offsetWidth, y: element.offsetHeight};
+}
+
+/**
+ * Wrap an event handler in a function that only executes the handler for mouse
+ * events that occur within the boundaries of the target element. The event
+ * object will have targetX/targetY properties that are relative to the element
+ * (e.g. clicking the left upper corner will yield targetX 0, targetY 0)
+ */
+function mouseInElement(el, handler) {
+  var element = el[0] && el[0].tagName ? el[0] : el;
+  return function (e) {
+    var pos = getPosition(element);
+    var dim = getDimensions(element);
+    var x = e.clientX - pos.x;
+    var y = e.clientY - pos.y;
+
+    if (x > 0 && y > 0 && x < dim.x && y < dim.y) {
+      e.targetX = x;
+      e.targetY = y;
+      handler.call(this, e);
+    }
+  };
 }
 
 function onMount(el, callback) {
@@ -157,3 +204,4 @@ function createInput(container, opt) {
 
 exports.createModel = createModel;
 exports.createInput = createInput;
+exports.mouseInElement = mouseInElement;
