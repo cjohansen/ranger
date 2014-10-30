@@ -1,6 +1,6 @@
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.ranger=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/*global mmouse*/
 var bane = require('bane');
-var mmouse = require('mmouse');
 
 function defaultAction(fn) {
   return function (e) {
@@ -12,6 +12,10 @@ function defaultAction(fn) {
   };
 }
 
+/**
+ * Register event listener and return a 'spec' that can be passed to off() to
+ * deregister.
+ */
 function on(el, ev, handler) {
   el.addEventListener(ev, handler);
   return [el, ev, handler];
@@ -19,6 +23,49 @@ function on(el, ev, handler) {
 
 function off(spec) {
   spec[0].removeEventListener(spec[1], spec[2]);
+}
+
+/**
+ * Get the position of an element in the viewport.
+ */
+function getPosition(element) {
+  var x = 0;
+  var y = 0;
+  while (element) {
+    x += element.offsetLeft - element.scrollLeft + element.clientLeft;
+    y += element.offsetTop - element.scrollTop + element.clientTop;
+    element = element.offsetParent;
+  }
+  return {x: x, y: y};
+}
+
+/**
+ * Get dimensions of element
+ */
+function getDimensions(element) {
+  return {x: element.offsetWidth, y: element.offsetHeight};
+}
+
+/**
+ * Wrap an event handler in a function that only executes the handler for mouse
+ * events that occur within the boundaries of the target element. The event
+ * object will have targetX/targetY properties that are relative to the element
+ * (e.g. clicking the left upper corner will yield targetX 0, targetY 0)
+ */
+function mouseInElement(el, handler) {
+  var element = el[0] && el[0].tagName ? el[0] : el;
+  return function (e) {
+    var pos = getPosition(element);
+    var dim = getDimensions(element);
+    var x = e.clientX - pos.x;
+    var y = e.clientY - pos.y;
+
+    if (x > 0 && y > 0 && x < dim.x && y < dim.y) {
+      e.targetX = x;
+      e.targetY = y;
+      handler.call(this, e);
+    }
+  };
 }
 
 function onMount(el, callback) {
@@ -83,6 +130,10 @@ function createModel(container, slider, opt) {
       }
     },
 
+    navigateTo: function (e) {
+      model.tracker.moveTo({x: e.targetX, y: e.targetY});
+    },
+
     attemptFocus: function (e) {
       var el = e.target;
       var hadFocus = hasFocus;
@@ -141,6 +192,7 @@ function createInput(container, opt) {
   slider.style.position = 'absolute';
   var keydown = on(document.body, 'keydown', model.navigate);
   var click = on(document.body, 'click', model.attemptFocus);
+  var navigate = on(container, 'click', mouseInElement(container, model.navigateTo));
   var move = on(document.body, 'mousemove', defaultAction(model.tracker.track));
   var mouseup = on(document.body, 'mouseup', defaultAction(model.tracker.stop));
   var mousedown = on(slider, 'mousedown', defaultAction(model.tracker.start));
@@ -158,8 +210,9 @@ function createInput(container, opt) {
 
 exports.createModel = createModel;
 exports.createInput = createInput;
+exports.mouseInElement = mouseInElement;
 
-},{"bane":2,"mmouse":3}],2:[function(require,module,exports){
+},{"bane":2}],2:[function(require,module,exports){
 ((typeof define === "function" && define.amd && function (m) { define("bane", m); }) ||
  (typeof module === "object" && function (m) { module.exports = m(); }) ||
  function (m) { this.bane = m(); }
@@ -334,104 +387,6 @@ exports.createInput = createInput;
         }
     };
 });
-
-},{}],3:[function(require,module,exports){
-function clamp(val, min, max) {
-  min = typeof min === 'number' ? min : -Infinity;
-  max = typeof max === 'number' ? max : Infinity;
-  return Math.max(min, Math.min(max, val));
-}
-
-function noop() {}
-
-function trackMovement(options) {
-  var opts = options || {};
-  var startX, startY, diffX, diffY, prevX, prevY, posX = 0, posY = 0;
-  var enabled = opts.hasOwnProperty('enabled') ? opts.enabled : true;
-  var onMove = opts.onMove || noop;
-  var onStart = opts.onStart || noop;
-  var onStop = opts.onStop || noop;
-  var getMinX = opts.getMinX || noop;
-  var getMaxX = opts.getMaxX || noop;
-  var getMaxY = opts.getMaxY || noop;
-  var getMinY = opts.getMinY || noop;
-
-  function start(e) {
-    if (!enabled) { return; }
-    startX = e.pageX;
-    startY = e.pageY;
-    prevX = startX;
-    prevY = startY;
-    onStart({x: startX, y: startY});
-  }
-
-  function stop(e) {
-    if (!enabled || startX === undefined) { return; }
-    var endX = e.pageX - startX;
-    var endY = e.pageY - startY;
-    startX = undefined;
-    startY = undefined;
-    posX = clamp(posX, getMinX(), getMaxX());
-    posY = clamp(posY, getMinY(), getMaxY());
-    onStop({x: endX, y: endY});
-  }
-
-  function track(e) {
-    if (!enabled || startX === undefined) { return; }
-    posX = posX + (e.pageX - prevX);
-    posY = posY + (e.pageY - prevY);
-    prevX = e.pageX;
-    prevY = e.pageY;
-
-    onMove({
-      startX: startX,
-      startY: startY,
-      endX: e.pageX,
-      endY: e.pageY,
-      dx: e.pageX - startX,
-      dy: e.pageY - startY,
-      posX: clamp(posX, getMinX(), getMaxX()),
-      posY: clamp(posY, getMinY(), getMaxY())
-    });
-  }
-
-  return {
-    move: function (e) {
-      startX = prevX || 0;
-      startY = prevY || 0;
-      start({pageX: startX, pageY: startY});
-      var target = {pageX: startX + (e.x || 0), pageY: startY + (e.y || 0)};
-      track(target);
-      stop(target);
-    },
-
-    disable: function () {
-      enabled = false;
-      startX = undefined;
-      startY = undefined;
-    },
-
-    enable: function () {
-      enabled = true;
-    },
-
-    start: start,
-    stop: stop,
-    track: track
-  };
-}
-
-function trackMovementIn(el, opt) {
-  var options = opt || {};
-  options.getMinX = function () { return 0; };
-  options.getMaxX = function () { return el.offsetWidth; };
-  options.getMinY = function () { return 0; };
-  options.getMaxY = function () { return el.offsetHeight; };
-  return trackMovement(options);
-}
-
-exports.trackMovement = trackMovement;
-exports.trackMovementIn = trackMovementIn;
 
 },{}]},{},[1])(1)
 });

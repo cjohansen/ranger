@@ -1,5 +1,5 @@
+/*global mmouse*/
 var bane = require('bane');
-var mmouse = require('mmouse');
 
 function defaultAction(fn) {
   return function (e) {
@@ -129,6 +129,10 @@ function createModel(container, slider, opt) {
       }
     },
 
+    navigateTo: function (e) {
+      model.tracker.moveTo({x: e.targetX, y: e.targetY});
+    },
+
     attemptFocus: function (e) {
       var el = e.target;
       var hadFocus = hasFocus;
@@ -187,6 +191,7 @@ function createInput(container, opt) {
   slider.style.position = 'absolute';
   var keydown = on(document.body, 'keydown', model.navigate);
   var click = on(document.body, 'click', model.attemptFocus);
+  var navigate = on(container, 'click', mouseInElement(container, model.navigateTo));
   var move = on(document.body, 'mousemove', defaultAction(model.tracker.track));
   var mouseup = on(document.body, 'mouseup', defaultAction(model.tracker.stop));
   var mousedown = on(slider, 'mousedown', defaultAction(model.tracker.start));

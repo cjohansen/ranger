@@ -6,6 +6,7 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser as globals
     files: [
       'node_modules/bane/lib/bane.js',
+      'node_modules/mmouse/dist/mmouse.js',
       'node_modules/lodash/dist/lodash.min.js'
     ],
 
