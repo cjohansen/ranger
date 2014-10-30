@@ -1,6 +1,6 @@
 {
   "name": "ranger",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Custom range input component",
   "main": "index.js",
   "directories": {
