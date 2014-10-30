@@ -4,7 +4,9 @@ var mmouse = require('mmouse');
 
 function defaultAction(fn) {
   return function (e) {
-    if (!fn(e)) {
+    // Tracker functions return data when they are active. If nothing was
+    // returned, it means we should ignore this event and allow it to propagate
+    if (fn(e)) {
       e.preventDefault();
     }
   };
